@@ -197,6 +197,33 @@ window.OFTrello = function(opts) {
 		);
 	};
 	
+	this.getCards = function(opts) {
+		Trello.get("boards/"+opts.board.id+"/cards", {
+				filter: 'open'
+			},
+			function(cards) {
+				opts.board.cards = cards;
+
+				$.each(cards, function(ix, card) {	
+					//console.log(card);
+					me.addOmniFocusTask({
+						name: card.name,
+						note: card.desc  + "\n\n" + card.url
+					});
+				});
+			
+				me._dequeueOmniFocusTaskQueue();
+			},
+			function(err) {
+				console.error("Failed to load board cards...");
+				console.error(err);
+				if(opts.error) {
+					opts.error(err);
+				}
+			}  
+		);
+	};
+	
 	this.createCard = function(opts) {
 
 		if(!opts || !opts.name || !opts.description || !opts.board) {
@@ -234,20 +261,42 @@ window.OFTrello = function(opts) {
 				console.error(err);
 			}
 		});
-
 	};
 	
-	this.addOmniFocusTask = function(task) {   	 
-   	 	$iframe = $("<iframe>")
-			.attr("id", "task-frame")
-			.attr("src", "createOmniFocusTask://"+
-						encodeURIComponent(task.name)+"/"+
-						encodeURIComponent(task.note)+"/"+
-						encodeURIComponent(task.project)
-			)
-			.appendTo(this.outputContainer)			
-		;
+	this.omniFocusTaskQueueInUse = false;
+	this.omniFocusTaskQueue = [];
+	this.addOmniFocusTask = function(task) {
+		me.omniFocusTaskQueue.push(task);
+		console.log("Queued task '"+task.name+"' to be added to OmniFocus");
 	}
+	
+	this._dequeueOmniFocusTaskQueue = function() {
+		
+		if(me.omniFocusTaskQueueInUse) {
+			//setTimeout(me._dequeueOmniFocusTaskQueue, 500);
+			return;
+		}
+		me.omniFocusTaskQueueInUse = true;
+		
+		var task = me.omniFocusTaskQueue.shift();
+		if(!task) {
+			me.omniFocusTaskQueueInUse = false;
+			return;
+		}
+
+		var url = "createOmniFocusTask://"+
+				encodeURIComponent(task.name)+"/"+
+				encodeURIComponent(task.note);
+				
+		var w = window.open(url, "Adding "+task.name+" to OmniFocus", "width=100,height=100");
+		w.close();
+		console.log("Task '"+task.name+"' added to OmniFocus");
+
+		setTimeout(function() {
+			me.omniFocusTaskQueueInUse = false;
+			me._dequeueOmniFocusTaskQueue()
+		}, 1000);
+	};
 	
 
 
