@@ -23,9 +23,8 @@ body {
     padding: 4px;
 }
 
-.card { 
+.card, .board { 
     display: block; 
     padding: 2px;
 }
-
 
