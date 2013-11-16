@@ -1,21 +1,28 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/include.sh"
+
 # Options and Usage
 
 usage() { 
 	echo -e "\
-Usage: $0 [-p <path>] [-q] [-h]\n\
+Usage: $0 [-p <path>] [-v] [-s] [-h]\n\
 Options:\n\
 	-p <path>       Path to watch and deploy from (default: src)\n\
-	-q              Quiet mode\n\
+	-s              Standard output mode (not on one screen)\n\
+	-v              Verbose mode\n\
 	-h              Show this help\n" 1>&2; 
 	exit 1;
 }
 
-while getopts ":qp:" o; do
+while getopts ":vsp:" o; do
     case "${o}" in
-        q)
-            QUIET='-q'
+        v)
+            VERBOSE='-v'
+            ;;
+        s)
+            STANDARD_OUTPUT='-s'
             ;;
         p)
             DIR=${OPTARG}
@@ -27,27 +34,53 @@ while getopts ":qp:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${DIR}" ]; then
-    DIR=src
-fi
+# Defaults
+DIR=${DIR:-src}
+
+# This function allows us to perform update actions while the script is indefinitely running
+function monitor {
+
+	# Create our space
+	for i in {1..5}; do echo ""; done
+
+	while true
+	do
+		TIME_MSG="Time: `date +'%r'`"
+		displayMessage "$TIME_MSG" "" $(( `tput lines` - 2 )) $(( `tput cols` - ${#TIME_MSG} ))
+		sleep 1
+	done
+}
+
+# Start our monitor in the background
+monitor &
+
+# Save monitor() PID
+MONITOR_PID=$!
+
+# Handle cleanup
+function finish {
+	# Kill the monitor
+	kill $MONITOR_PID >/dev/null 2>&1
+}
+trap finish EXIT
 
 
+###### Change Monitoring & Deployment #######
 
+DEPLOY_CMD="./scripts/deploy.sh -p $DIR $VERBOSE"
+function deploy {
+	$DEPLOY_CMD
+}
 
-
-
-# Functionality starts here
-
-DEPLOY_CMD="./scripts/deploy.sh -p $DIR $QUIET"
-
-echo "Performing initial sync with DEPLOY_CMD=$DEPLOY_CMD..."
-$DEPLOY_CMD
+displayMessage "Performing initial sync with DEPLOY_CMD=$DEPLOY_CMD..." "YES"
+deploy
 
 while true; do
-	if [ -z "$QUIET" ]; then echo "Watching '$DIR' for changes ("`date`")..."; fi
+	displayMessage "Watching '$DIR' for changes ("`date`")..." "YES"
 	if [ -z "`which inotifywait`" ]; then
-		./lib/fswatch/fswatch $DIR "$DEPLOY_CMD"
+		./lib/fswatch/fswatch $DIR "deploy"
 	else
-		inotifywait $DIR && $DEPLOY_CMD
+		inotifywait $DIR && deploy
 	fi
 done
+

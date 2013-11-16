@@ -1,21 +1,28 @@
 #!/bin/bash
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source "$SCRIPT_DIR/include.sh"
+
 # Options and Usage
 
 usage() { 
 	echo -e "\
-Usage: $0 [-p <path>] [-q] [-h]\n\
+Usage: $0 [-p <path>] [-v] [-s] [-h]\n\
 Options:\n\
 	-p <path>       Path to deploy from\n\
-	-q              Quiet mode\n\
+	-s              Standard output mode (not on one screen)\n\
+	-v              Verbose mode\n\
 	-h              Show this help\n" 1>&2; 
 	exit 1;
 }
 
-while getopts ":qp:" o; do
+while getopts ":vsp:" o; do
     case "${o}" in
-        q)
-            QUIET=1
+        v)
+            VERBOSE='-v'
+            ;;
+        s)
+            STANDARD_OUTPUT='-s'
             ;;
         p)
             D=${OPTARG%*/}
@@ -34,13 +41,12 @@ while getopts ":qp:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "$LOCAL_DIR" ];then
-	usage
-fi
+if [ -z "$LOCAL_DIR" ]; then usage; fi
 
 
 
-# Functionality starts here
+
+###### Deployment #######
 
 REMOTE_HOST=conquerllc.com
 REMOTE_USER=root
@@ -51,9 +57,7 @@ NOTIFIER_OPEN_URL="http://$REMOTE_HOST/$REMOTE_DIR"
 NOTIFIER_GROUP_ID="$PARENT_DIR/$LOCAL_DIR.autodeployer"
 NOTIFIER_DIR_DISPLAY_NAME="${PARENT_DIR##*/}/$LOCAL_DIR"
 
-if [ -z "$QUIET" ]; then echo echo ""; fi
-if [ -z "$QUIET" ]; then echo echo "------- Deployment of $NOTIFIER_DIR_DISPLAY_NAME started -------"; fi
-if [ -z "$QUIET" ]; then echo echo "Deploying contents of '"$LOCAL_DIR"' to '"$REMOTE_DIR"' on $REMOTE_HOST as user $REMOTE_USER"; fi
+displayMessage "Deploying contents of '$NOTIFIER_DIR_DISPLAY_NAME' to '$REMOTE_DIR' on $REMOTE_HOST as user $REMOTE_USER"
 
 RESULTS=`rsync -av $LOCAL_DIR/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_WEB_DIR/$REMOTE_DIR/`
 TMP=${RESULTS#sending incremental file list*}
@@ -67,7 +71,10 @@ if [ -n "$FILE_LIST" ]; then
 	fi
 fi
 
-echo "------- Deployed $NOTIFIER_DIR_DISPLAY_NAME -------"
-if [ -z "$QUIET" ]; then echo echo ""; fi
+displayMessage "------- Deployed $NOTIFIER_DIR_DISPLAY_NAME at `date +'%r'` -------"
+if [ -z "$STANDARD_OUTPUT" ]; then
+	LAST_DEPLOY_MSG="Last Deploy: `date +'%r'`"
+	displayMessage "$LAST_DEPLOY_MSG" "" $(( `tput lines` - 1 )) $(( `tput cols` - ${#LAST_DEPLOY_MSG} ))
+fi
 
 

@@ -156,16 +156,22 @@ window.OFTrello = function(opts) {
 		);
 	};
 	
-	this.createCard = function() {
+	this.createCard = function(opts) {
 
-		Trello.post("members/me/cards", {
-				name: 'open',
-				desc: '',
-				pos: 'bottom',
-				due: null,
-				labels: '',
-				idList: '',
-				idMembers: this.member.id
+		if(!opts || !opts.name || !opts.description || !opts.board) {
+			console.warn("OFTrello.createCard(opts) must be provided with opts in form {name:description:due:board}");
+			return;
+		}
+		opts.due = opts.due || null;
+		
+
+		Trello.post("cards", {
+				name: opts.name,
+				description: opts.desc,
+				idList: opts.board.id,
+				due: opts.due,
+				idMembers: this.member.id,
+				pos: 'bottom'
 			},
 			function(boards) {
 				$boards.empty();
