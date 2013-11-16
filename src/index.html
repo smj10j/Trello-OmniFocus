@@ -39,11 +39,20 @@
 
 
 <script>
+	var oft;
 	$(function() {
 	
-		$("#connectLink").click(doAuthorize);
-	
-		$("#disconnect").click(doLogout);
+		oft = new OFTrello({
+			onAuthorizationChange: function() {
+				var isLoggedIn = Trello.authorized();
+				$("#loggedout").toggle(!isLoggedIn);
+				$("#loggedin").toggle(isLoggedIn); 
+				$("#output").empty();
+			}
+		});
+		
+		$("#connectLink").click(oft.authorize);
+		$("#disconnect").click(oft.logout);
 	});
 </script>
 </body>
