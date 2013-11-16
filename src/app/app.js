@@ -164,7 +164,6 @@ window.OFTrello = function(opts) {
 		}
 		opts.due = opts.due || null;
 		
-
 		Trello.post("cards", {
 				name: opts.name,
 				description: opts.desc,
@@ -190,6 +189,9 @@ window.OFTrello = function(opts) {
 		);
 	};
 	
+	
+
+
 
 	/* Private Methods */
 
@@ -199,7 +201,6 @@ window.OFTrello = function(opts) {
 			me.getBoards();	
 		});
 	};
-
 
 	/* Instantiation */
 	

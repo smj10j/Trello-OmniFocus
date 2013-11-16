@@ -4,45 +4,30 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$SCRIPT_DIR/include.sh"
 
 # Options and Usage
-
 usage() { 
 	echo -e "\
-Usage: $0 [-p <path>] [-v] [-s] [-h]\n\
+Usage: $0 [-v] [-s] [-h] path\n\
 Options:\n\
-	-p <path>       Path to deploy from\n\
+	path            Path to deploy from\n\
 	-s              Standard output mode (not on one screen)\n\
 	-v              Verbose mode\n\
-	-h              Show this help\n" 1>&2; 
-	exit 1;
+	-h              Show this help\n" 2>&1; 
+	cleanupAndExit 1;
 }
 
-while getopts ":vsp:" o; do
-    case "${o}" in
-        v)
-            VERBOSE='-v'
-            ;;
-        s)
-            STANDARD_OUTPUT='-s'
-            ;;
-        p)
-            D=${OPTARG%*/}
-            if [[ $D == */* ]]; then 
-            	PARENT_DIR=`dirname $D`
-            	LOCAL_DIR=${D/$PARENT_DIR\/}
-            else
-	            LOCAL_DIR=$D
-				PARENT_DIR=`pwd`
-            fi
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
+# Positional arguments
+DIR=`echo "${@:$OPTIND:1}" | tr -d '"'`
+DIR=${DIR%*/}
+if [[ $DIR == */* ]]; then 
+	PARENT_DIR=`dirname $DIR`
+	LOCAL_DIR=${DIR/$PARENT_DIR\/}
+else
+	LOCAL_DIR=$DIR
+	PARENT_DIR=`pwd`
+fi
+shift $(($OPTIND - 1))
 
 if [ -z "$LOCAL_DIR" ]; then usage; fi
-
 
 
 
@@ -57,9 +42,9 @@ NOTIFIER_OPEN_URL="http://$REMOTE_HOST/$REMOTE_DIR"
 NOTIFIER_GROUP_ID="$PARENT_DIR/$LOCAL_DIR.autodeployer"
 NOTIFIER_DIR_DISPLAY_NAME="${PARENT_DIR##*/}/$LOCAL_DIR"
 
-displayMessage "Deploying contents of '$NOTIFIER_DIR_DISPLAY_NAME' to '$REMOTE_DIR' on $REMOTE_HOST as user $REMOTE_USER"
+displayMessage "Deploying contents of '$NOTIFIER_DIR_DISPLAY_NAME' to '$REMOTE_DIR' on $REMOTE_HOST as user $REMOTE_USER" "$X_LEFT" "$Y_STATUS"
 
-RESULTS=`rsync -av $LOCAL_DIR/ $REMOTE_USER@$REMOTE_HOST:$REMOTE_WEB_DIR/$REMOTE_DIR/`
+RESULTS=`rsync -av $LOCAL_DIR $REMOTE_USER@$REMOTE_HOST:$REMOTE_WEB_DIR/$REMOTE_DIR`
 TMP=${RESULTS#sending incremental file list*}
 FILE_LIST=`echo "${TMP%sent*}" | tr -d ' '`
 
@@ -69,12 +54,11 @@ if [ -n "$FILE_LIST" ]; then
 	elif [ -n "`which terminal-notifier`" ]; then
 		terminal-notifier -title "Deployed $NOTIFIER_DIR_DISPLAY_NAME" -subtitle "$FILE_LIST" -group "$NOTIFIER_GROUP_ID" --appIcon "Google Chrome" -open "$NOTIFIER_OPEN_URL"
 	fi
+
+	displayMessage "Last Deploy: `date +'%r'`" "$X_RIGHT" "$Y_PROGRESS" 
+else
+	displayMessage "No files changed" "$X_RIGHT" "$Y_PROGRESS" 
 fi
 
-displayMessage "------- Deployed $NOTIFIER_DIR_DISPLAY_NAME at `date +'%r'` -------"
-if [ -z "$STANDARD_OUTPUT" ]; then
-	LAST_DEPLOY_MSG="Last Deploy: `date +'%r'`"
-	displayMessage "$LAST_DEPLOY_MSG" "" $(( `tput lines` - 1 )) $(( `tput cols` - ${#LAST_DEPLOY_MSG} ))
-fi
 
-
+cleanupAndExit 0
