@@ -39,7 +39,8 @@ if [ "$PARENT_PROCESS_NAME" == "-bash" ]; then
 fi
 
 # X,Y levels for messages
-Y_CURRENT_TIME="$(( `tput lines` - 2 ))"
+Y_CURRENT_TIME='0'
+Y_STICKY_STATUS='1'
 Y_STATUS="$(( `tput lines` - 1 ))"
 
 X_RIGHT='$(( `tput cols` - ${#MSG} - 1 ))'
@@ -53,7 +54,7 @@ function displayMessage {
 	MSG=$1
 	
 	# (msg, x, y)
-	if [ $# -le 4 ]; then
+	if [ $# -le 3 ]; then
 		CAN_DISPLAY=''
 		X=${2:-$X_LEFT}
 		Y=${3:-$Y_STATUS}
@@ -74,6 +75,8 @@ function displayMessage {
 	_displayMessage "$MSG" "$CAN_DISPLAY" "$X" "$Y"
 }
 
+#TODO: this drawing function is poor 
+#Should just hold a list of all elements on the screen and redraw when needed
 function _displayMessage {
 
 	MSG=$1
@@ -88,19 +91,13 @@ function _displayMessage {
 		if [ -n "$STANDARD_OUTPUT" ]; then
 			#tput ech `tput cols`
 			echo $MSG
-		else 
-			tput sc
-			
-			# echo "X: $X, Y: $Y"
+		else 			
 			tput cup $Y $X
 			echo -n $MSG
-			
-			if [ "$X" == "0" ]; then
-				tput el
-			fi
-	
-			tput rc
+			tput cup $Y 0
 		fi
+		
+
 	fi
 }
 
@@ -208,12 +205,14 @@ if [ -n "$IS_PARENT" ]; then
 		tput clear
 	
 		# Save prompt state and clear it
+		tput sc
 		OLDPS1=$PS1
 		PS1=""
 	
 		# Restore prompt state on exit
 		function new_finish {
 			PS1=$OLDPS1
+			tput rc
 		}
 		addFinishFunction "" "$(declare -f new_finish)"
 	fi

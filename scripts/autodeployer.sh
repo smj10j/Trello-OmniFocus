@@ -24,7 +24,7 @@ shift $(($OPTIND - 1))
 function monitor {
 	while true
 	do
-		displayMessage "Time: `date +'%r'`" "$X_RIGHT" "$Y_CURRENT_TIME"
+		displayMessage "Time: `date +'%r'`" "YES" "$X_RIGHT" "$Y_CURRENT_TIME"
 		sleep 1
 	done
 }
@@ -42,11 +42,14 @@ fi
 
 DEPLOY_CMD="./scripts/deploy.sh $VERBOSE $STANDARD_OUTPUT \"$DIR\" 2>&1"
 
-displayMessage "Performing initial sync..." "$X_LEFT" "$Y_PROGRESS"
+displayMessage "Watching '$DIR' for changes (`date`)..." "YES" "$X_LEFT" "$Y_STATUS" 
+displayMessage "Performing initial sync..." "YES" "$X_LEFT" "$Y_STATUS" 
 $DEPLOY_CMD
+displayMessage "" "YES" "$X_LEFT" "$Y_STATUS" 
+
 
 while true; do
-	displayMessage "Watching '$DIR' for changes (`date`)..." "$X_LEFT" "$Y_STATUS" 
+	displayMessage "Watching '$DIR' for changes (`date`)..." "YES" "$X_LEFT" "$Y_STATUS" 
 	if [ -z "`which inotifywait`" ]; then
 		./lib/fswatch/fswatch $DIR "$DEPLOY_CMD"
 	else

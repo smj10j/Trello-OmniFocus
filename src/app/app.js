@@ -110,7 +110,7 @@ window.OFTrello = function(opts) {
 			$.each(this.boardsToSync, function(ix, board) {
 				$("<div>")
 					.addClass("board")
-					.text(board.name + " (-)")
+					.text(board.name)
 					.data('board', board)
 					.appendTo($syncedBoards)
 					.click(onClickSyncedBoard)
@@ -137,7 +137,7 @@ window.OFTrello = function(opts) {
 					$board = $("<div>")
 						.attr('id','board-'+board.id)
 						.addClass("board")
-						.text(board.name + " (+)")
+						.text(board.name)
 						.data('board', board)
 						.appendTo($availableBoards)
 						.click(onClickAvailableBoard)
@@ -148,10 +148,51 @@ window.OFTrello = function(opts) {
 							$board.toggle();
 						}
 					});
+					
 				});
 			},
-			function() {
-				console.log("Failed to load boards...");
+			function(err) {
+				console.error("Failed to load boards...");
+				console.error(err);
+			}  
+		);
+	};
+	
+	this.getListFromBoardByName = function(opts) {
+		var lowerListName = opts.listName.toLowerCase();
+		Trello.get("boards/"+opts.board.id+"/lists", {
+				cards: 'open',
+				filter: 'open'
+			},
+			function(lists) {
+				opts.board.lists = lists;
+				var targetList = null;
+				$.each(lists, function(ix, list) {	
+					if(list.name.toLowerCase() == lowerListName) {
+						targetList = list;
+					}else if(!targetList && opts.onFailureReturnFirstList) {
+						targetList = list;					
+					}
+				});
+				
+				if(targetList) {
+					if(opts.success) {
+						opts.success(targetList);
+					}
+				}else {
+					if(opts.error) {
+						opts.error({
+							message: "No list with name '"+opts.listName+"' was found in board '"+opts.board.name+"'"
+						});
+					}
+				}
+			},
+			function(err) {
+				console.error("Failed to load board lists...");
+				console.error(err);
+				if(opts.error) {
+					opts.error(err);
+				}
 			}  
 		);
 	};
@@ -164,33 +205,50 @@ window.OFTrello = function(opts) {
 		}
 		opts.due = opts.due || null;
 		
-		Trello.post("cards", {
-				name: opts.name,
-				description: opts.desc,
-				idList: opts.board.id,
-				due: opts.due,
-				idMembers: this.member.id,
-				pos: 'bottom'
+		
+		// Grab the ToDo list
+		var list = this.getListFromBoardByName({
+			board: opts.board, 
+			listName: 'To Do',
+			onFailureReturnFirstList: true,
+			success: function(list) {
+				Trello.post("cards", {
+						name: opts.name,
+						description: opts.description,
+						idList: list.id,
+						due: opts.due,
+						idMembers: me.member.id,
+						pos: 'bottom'
+					},
+					function(response) {
+						console.log("Card created!");
+						console.log(response);
+					},
+					function(err) {
+						console.error("Failed to create card...");
+						console.error(err);
+					}  
+				);			
 			},
-			function(boards) {
-				$boards.empty();
-				$.each(boards, function(ix, board) {
-					console.log(board);
-					$("<a>")
-						.attr({href: board.url, target: "trello"})
-						.addClass("board")
-						.text(board.name)
-						.appendTo($boards);
-				});
-			},
-			function() {
-				console.log("Failed to load boards...");
-			}  
-		);
+			error: function(err) {
+				console.error(err);
+			}
+		});
+
 	};
 	
+	this.addOmniFocusTask = function(task) {   	 
+   	 	$iframe = $("<iframe>")
+			.attr("id", "task-frame")
+			.attr("src", "createOmniFocusTask://"+
+						encodeURIComponent(task.name)+"/"+
+						encodeURIComponent(task.note)+"/"+
+						encodeURIComponent(task.project)
+			)
+			.appendTo(this.outputContainer)			
+		;
+	}
 	
-
 
 
 	/* Private Methods */

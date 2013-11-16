@@ -32,9 +32,22 @@ body {
     margin-top:10px;
 }
 
-.card, .board { 
+.board, .list, .card {
     display: block; 
     padding: 2px;
     cursor: pointer;
+}
+
+.board { 
+
+}
+
+.board .list { 
+	margin-left:10px;
+	font-size:90%;
+}
+
+.card { 
+
 }
 

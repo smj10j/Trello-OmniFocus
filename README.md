@@ -3,7 +3,7 @@ Trello-OmniFocus
 
 Sends OmniFocus task status to Trello
 
-### Deployment Watcer ###
+### Deployment Watcher ###
 
 Start with ```./scripts/autodeployer.sh```
 
@@ -16,7 +16,7 @@ Start with ```./scripts/autodeployer.sh```
 - OmniFocus
    - 
    
-   
+
    
 ### Deployment Dependencies ###
 
