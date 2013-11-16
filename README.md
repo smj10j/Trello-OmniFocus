@@ -3,6 +3,8 @@ Trello-OmniFocus
 
 Sends OmniFocus task status to Trello
 
+Example: [http://conquerllc.com/trello-omnifocus/](http://conquerllc.com/trello-omnifocus/)
+
 ### Deployment Watcher ###
 
 Start with ```./scripts/autodeployer.sh```
