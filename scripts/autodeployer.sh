@@ -55,14 +55,14 @@ function monitor {
 monitor &
 
 # Save monitor() PID
-MONITOR_PID=$!
+addChildPID $!
 
 # Handle cleanup
-function finish {
-	# Kill the monitor
-	kill $MONITOR_PID >/dev/null 2>&1
-}
-trap finish EXIT
+FINISH_FUNCTION=$(cat << 'EOF'
+	echo "$0 completed at `date +'%r'`"
+EOF
+)
+addFinishFunction "$FINISH_FUNCTION"
 
 
 ###### Change Monitoring & Deployment #######
@@ -72,11 +72,11 @@ function deploy {
 	$DEPLOY_CMD
 }
 
-displayMessage "Performing initial sync with DEPLOY_CMD=$DEPLOY_CMD..." "YES"
+displayMessage "Performing initial sync with DEPLOY_CMD=$DEPLOY_CMD..." "YES" 0 0 3
 deploy
 
 while true; do
-	displayMessage "Watching '$DIR' for changes ("`date`")..." "YES"
+	displayMessage "Watching '$DIR' for changes (`date`)..." "YES"
 	if [ -z "`which inotifywait`" ]; then
 		./lib/fswatch/fswatch $DIR "deploy"
 	else

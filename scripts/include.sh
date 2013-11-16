@@ -2,16 +2,22 @@
 
 #
 # Helpful docs
-# http://www.tldp.org/HOWTO/Bash-Prompt-HOWTO/x405.html
+# Cursor positioning: http://www.tldp.org/HOWTO/Bash-Prompt-HOWTO/x405.html
+# Function rewriting: http://unix.stackexchange.com/questions/29689/how-do-i-redefine-a-bash-function-in-terms-of-old-definition
 #
 
 
 # Move the cursor to the bottom left, prints the given string, and restores state
 
 function displayMessage {
-	CMD="(_displayMessage \"$1\" \"$2\" \"$3\" \"$4\" \"$5\") ${5:+&}"
-	echo "Executing command: $CMD"
-	eval $CMD
+	if [ -n "$5" ]; then
+		CMD="(_displayMessage \"$1\" \"$2\" \"$3\" \"$4\" \"$5\") &"
+		eval $CMD
+		PID=$!
+		addChildPID $PID
+	else
+		_displayMessage "$1" "$2" "$3" "$4"
+	fi
 }
 
 function _displayMessage {
@@ -48,16 +54,29 @@ OLDPS1=$PS1
 PS1=""
 
 # Handle cleanup
-function finish {
 
-	TERMINATED_MSG="$0 completed at `date +'%r'`"
-	displayMessage "$TERMINATED_MSG" "YES" $(( `tput lines` - 1 )) 0
-	#if [ -z "$STANDARD_OUTPUT" ]; then
-	#	sleep 1
-	#	echo ""
-	#fi
-
-	# Restore prompt state
-	PS1=$OLDPS1
+CHILDREN_PIDS=()
+function addChildPID {
+	CHILDREN_PIDS+=($1)
 }
-trap finish EXIT
+
+function addFinishFunction {
+	if [ -z "$1" ]; then
+		echo "You must supply a function as the first argument to addFinishFunction(function)";
+		exit 1
+	fi
+
+	if [ -n "`type -t abc`" ]; then
+		OLD_FINISH_BODY=$(declare -f finish)
+		OLD_FINISH_BODY=${OLD_FINISH_BODY#*\{}
+		OLD_FINISH_BODY=${OLD_FINISH_BODY%\}\}
+	else
+		OLD_FINISH_BODY="#Not previously defined"
+	fi
+
+	eval "finish () {\
+	  $NEW_FINISH_BODY\
+	  $OLD_FINISH_BODY\
+	}"
+}
+
