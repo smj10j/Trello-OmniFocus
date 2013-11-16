@@ -14,6 +14,7 @@ body {
 }
 
 #header {
+	text-align:right;
     padding: 4px;
     border-bottom: 1px solid #000;
     background: #eee;
@@ -23,8 +24,17 @@ body {
     padding: 4px;
 }
 
+.h-divider {
+	text-align:left;
+    padding: 4px;
+    border-bottom: 1px solid #000;
+    background: #eee;
+    margin-top:10px;
+}
+
 .card, .board { 
     display: block; 
     padding: 2px;
+    cursor: pointer;
 }
 

@@ -26,6 +26,7 @@
         Logged in to as <span id="fullName"></span> 
         <a id="disconnect" href="#">Log Out</a>
     </div>
+        
     <div id="output"></div>
 </div>    
 
@@ -35,12 +36,14 @@
 	$(function() {
 	
 		oft = new OFTrello({
-			onAuthorizationChange: function() {
-				var isLoggedIn = Trello.authorized();
-				$("#loggedout").toggle(!isLoggedIn);
-				$("#loggedin").toggle(isLoggedIn); 
-				$("#output").empty();
-			}
+			onAuthorizationChange: function(member) {
+				if(member) {
+					$("#fullName").text(member.fullName);			
+				}
+				$("#loggedout").toggle(!member);
+				$("#loggedin").toggle(member); 
+			},
+			outputContainer: $("#output")
 		});
 		
 		$("#connectLink").click(oft.authorize);
