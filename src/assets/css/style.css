@@ -1,0 +1,30 @@
+body {
+    font-family: arial;
+    font-size: 12px;
+}
+
+#loggedout {
+    text-align: center;
+    font-size: 20px;
+    padding-top: 30px;
+}
+#loggedin { 
+    display: none; 
+}
+
+#header {
+    padding: 4px;
+    border-bottom: 1px solid #000;
+    background: #eee;
+}
+
+#output {
+    padding: 4px;
+}
+
+.card { 
+    display: block; 
+    padding: 2px;
+}
+
+

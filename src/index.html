@@ -1,0 +1,51 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>OmniFocus to Trello Sync</title>
+
+	<!-- Styles -->
+	<link rel="stylesheet" type="text/css" media="screen" href="assets/css/style.css" />
+
+	<!-- The client library requires jQuery  -->
+	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+	<script src="https://api.trello.com/1/client.js?key=16f7525a7039ee80c23365e648b8a542"></script>
+	
+	
+	<!-- Our app code -->
+	<script src="app/app.js"></script>
+
+
+
+	<script>
+
+	</script>
+
+</head>
+<body>
+
+
+<div id="loggedout">
+    <a id="connectLink" href="#">Connect To Trello</a>
+</div>
+
+<div id="loggedin">
+    <div id="header">
+        Logged in to as <span id="fullName"></span> 
+        <a id="disconnect" href="#">Log Out</a>
+    </div>
+    <div id="output"></div>
+</div>    
+
+
+<script>
+	$(function() {
+	
+		$("#connectLink").click(doAuthorize);
+	
+		$("#disconnect").click(doLogout);
+	});
+</script>
+</body>
+
+</html>
